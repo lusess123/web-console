@@ -4,6 +4,7 @@ from transformers import pipeline;
 from datetime import datetime
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
+from chat import chatText
 
 import logging
 
@@ -31,6 +32,7 @@ hostoryMessage = []
 def handle_command_line_input():
     while True:
         input_data = input("请输入命令行数据: ")
+        if(input_data == ''): continue
         item1, item2 = consoleInput(input_data)
         # with app.app_context():
         socketio.emit('append', {'message': [item1 , item2]}, namespace='/chat')
@@ -42,9 +44,11 @@ def consoleInput(input_data):
     indexNum = indexNum + 1
     item1 = [indexNum, input_data, "user", datetime.now().timestamp()]
     hostoryMessage.append(item1)
-    result = pipeline(input_data)
+    # result = pipeline(input_data)
+    result = chatText(input_data)
         # print(result)
-    result_str = "{label}（{score:.3f}）".format(label=result[0]['label'].lower(), score=result[0]['score'])
+    result_str = result
+    # result_str = "{label}（{score:.3f}）".format(label=result[0]['label'].lower(), score=result[0]['score'])
         # 在这里处理命令行输入
     indexNum = indexNum + 1
     item2 = [indexNum, result_str, "ai", datetime.now().timestamp()]
@@ -61,16 +65,17 @@ def receive_input():
     input_data = request.args.get('input', default='', type=str)
     if(input_data == ''):
         return jsonify({"history": hostoryMessage})
-    indexNum = indexNum + 1
-    # 在这里处理 Web 接口接收的数据
-    hostoryMessage.append([indexNum, input_data, "user", datetime.now().timestamp()])
-    print(f"Web 数据接收: {input_data}")
-    result = pipeline(input_data)
-    result_str = "{label}（{score:.3f}）".format(label=result[0]['label'].lower(), score=result[0]['score'])
-    print(f"{result_str}")
-    indexNum = indexNum + 1
-    hostoryMessage.append([indexNum, result_str, "ai", datetime.now().timestamp()])
-    resJson =  jsonify({"message": "Input received", "input": input_data, "result": result_str, "history": hostoryMessage})
+    # indexNum = indexNum + 1
+    # # 在这里处理 Web 接口接收的数据
+    # hostoryMessage.append([indexNum, input_data, "user", datetime.now().timestamp()])
+    # print(f"Web 数据接收: {input_data}")
+    # result = pipeline(input_data)
+    # result_str = "{label}（{score:.3f}）".format(label=result[0]['label'].lower(), score=result[0]['score'])
+    # print(f"{result_str}")
+    # indexNum = indexNum + 1
+    # hostoryMessage.append([indexNum, result_str, "ai", datetime.now().timestamp()])
+    item1, item2 = consoleInput(input_data)
+    resJson =  jsonify({"message": "Input received", "input": item1, "result": item2, "history": hostoryMessage})
     return resJson
 
 @socketio.on('connect', namespace='/chat')
@@ -88,19 +93,20 @@ def addMessage(text, textType):
 
 @socketio.on('message', namespace='/chat')
 def handle_message(text):
-    global hostoryMessage
-    item = addMessage(text, "user")
-    # 在这里处理 Web 接口接收的数据
-    hostoryMessage.append(item)
+    # global hostoryMessage
+    # item = addMessage(text, "user")
+    # # 在这里处理 Web 接口接收的数据
+    # hostoryMessage.append(item)
     print(f"Web 数据接收: {text}")
 
-    result = pipeline(text)
-    result_str = "{label}（{score:.3f}）".format(label=result[0]['label'].lower(), score=result[0]['score'])
-    print(f"{result_str}")
+    # result = pipeline(text)
+    # result_str = "{label}（{score:.3f}）".format(label=result[0]['label'].lower(), score=result[0]['score'])
+    # print(f"{result_str}")
 
-    item1 = addMessage(result_str, "ai")
-    hostoryMessage.append(item1)
-    
+    # item1 = addMessage(result_str, "ai")
+    # hostoryMessage.append(item1)
+    item, item1 = consoleInput(text)
+
     socketio.emit('append', {'message':[item, item1]}, namespace='/chat')
 
 @socketio.on('disconnect', namespace='/chat')
