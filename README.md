@@ -5,5 +5,5 @@
 ## pip install -r requirements.txt
 
 
-# setup 礼拜
+# setup 
 ## pip freeze > requirements.txt
