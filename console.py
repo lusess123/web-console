@@ -4,7 +4,8 @@ from transformers import pipeline;
 from datetime import datetime
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
-from chat import chatText
+# from chat import chatText
+from chatglm3 import glm3Chat
 
 import logging
 
@@ -37,21 +38,26 @@ def handle_command_line_input():
         # with app.app_context():
         socketio.emit('append', {'message': [item1 , item2]}, namespace='/chat')
 
-def consoleInput(input_data):
-    global indexNum 
+def getId(id):
+     if(id != ''): return id
+     global indexNum 
+     indexNum = indexNum + 1
+     return indexNum
+
+def consoleInput(input_data, askid = '', answerid= ''):
     global hostoryMessage
     global app 
-    indexNum = indexNum + 1
-    item1 = [indexNum, input_data, "user", datetime.now().timestamp()]
+    item1Id = getId(askid)
+    item1 = [item1Id, input_data, "user", datetime.now().timestamp()]
     hostoryMessage.append(item1)
     # result = pipeline(input_data)
-    result = chatText(input_data)
+    result = glm3Chat(input_data)
         # print(result)
     result_str = result
     # result_str = "{label}（{score:.3f}）".format(label=result[0]['label'].lower(), score=result[0]['score'])
         # 在这里处理命令行输入
-    indexNum = indexNum + 1
-    item2 = [indexNum, result_str, "ai", datetime.now().timestamp()]
+    item2Id = getId(answerid)
+    item2 = [item2Id, result_str, "ai", datetime.now().timestamp()]
     hostoryMessage.append(item2)
     print(f"回复: {result_str}")
     return item1,item2
@@ -92,7 +98,7 @@ def addMessage(text, textType):
 
 
 @socketio.on('message', namespace='/chat')
-def handle_message(text):
+def handle_message(text, askid, answerid):
     # global hostoryMessage
     # item = addMessage(text, "user")
     # # 在这里处理 Web 接口接收的数据
@@ -105,9 +111,9 @@ def handle_message(text):
 
     # item1 = addMessage(result_str, "ai")
     # hostoryMessage.append(item1)
-    item, item1 = consoleInput(text)
+    item, item1 = consoleInput(text, askid, answerid)
 
-    socketio.emit('append', {'message':[item, item1]}, namespace='/chat')
+    socketio.emit('append', {'message':[item,item1]}, namespace='/chat')
 
 @socketio.on('disconnect', namespace='/chat')
 def handle_disconnect():
