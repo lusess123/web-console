@@ -5,7 +5,7 @@ from datetime import datetime
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 # from chat import chatText
-from chatglm3 import glm3Chat
+from mindchat import chatHistory
 
 import logging
 
@@ -51,7 +51,7 @@ def consoleInput(input_data, askid = '', answerid= ''):
     item1 = [item1Id, input_data, "user", datetime.now().timestamp()]
     hostoryMessage.append(item1)
     # result = pipeline(input_data)
-    result = glm3Chat(input_data)
+    result = chatHistory(input_data)
         # print(result)
     result_str = result
     # result_str = "{label}（{score:.3f}）".format(label=result[0]['label'].lower(), score=result[0]['score'])
